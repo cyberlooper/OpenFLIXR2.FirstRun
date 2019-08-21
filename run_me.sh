@@ -73,13 +73,14 @@ if [[ ${TERM:0:6} != "screen" ]]; then
     if [[ $(grep -c "bash ${FIRSTRUN_DIR}/startup.sh" "${DETECTED_HOMEDIR}/.bashrc") == 0 ]]; then
         info "Adding FirstRun startup script to .profile to run on boot until this is all done..."
         echo "" >> "${DETECTED_HOMEDIR}/.bashrc"
-        echo "if [[ -f ${FIRSTRUN_DIR}/startup.sh ]]; then" >> "${DETECTED_HOMEDIR}/.bashrc"
-        echo "    bash ${FIRSTRUN_DIR}/startup.sh" >> "${DETECTED_HOMEDIR}/.bashrc"
-        echo "fi" >> "${DETECTED_HOMEDIR}/.bashrc"
+        echo "if [[ -f ${FIRSTRUN_DIR}/startup.sh ]]; then   #firstrun-startup" >> "${DETECTED_HOMEDIR}/.bashrc"
+        echo "    bash ${FIRSTRUN_DIR}/startup.sh            #firstrun-startup" >> "${DETECTED_HOMEDIR}/.bashrc"
+        echo "fi                                             #firstrun-startup" >> "${DETECTED_HOMEDIR}/.bashrc"
         info "- Done"
     fi
 
     echo "Attempting to create and connect to screen session 'openflixr_setup'."
+    sleep 10s
     if ! screen -list | grep -q "openflixr_setup"; then
         screen -dmS openflixr_setup
     fi
