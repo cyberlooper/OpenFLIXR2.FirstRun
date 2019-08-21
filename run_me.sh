@@ -45,8 +45,8 @@ if [[ ${TERM:0:6} != "screen" ]]; then
         warning "Screen needs to be installed..."
         echo "openflixr" | sudo -S apt-get -y install screen
     fi
-    if [[ -f "${PRECHECK_DIR}/precheck.config" ]]; then
-        source "${PRECHECK_DIR}/precheck.config"
+    if [[ -f "${FIRSTRUN_DATA_DIR}/.config" ]]; then
+        source "${FIRSTRUN_DATA_DIR}/.config"
         log "DEV_BRANCH='${DEV_BRANCH:-}'"
         log "FIRSTRUN_BRANCH='${FIRSTRUN_BRANCH:-}'"
         log "SETUP_BRANCH='${SETUP_BRANCH:-}'"
