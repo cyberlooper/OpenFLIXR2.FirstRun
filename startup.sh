@@ -12,12 +12,8 @@ readonly FIRSTRUN_LOG_DIR="${FIRSTRUN_DATA_DIR}/logs"
 if [[ ${TERM:0:6} == "screen" ]]; then
     SCREEN_SESSION_NAME=$(echo $STY | cut -d '.' -f 2)
     if [[ ${SCREEN_SESSION_NAME} == "openflixr_setup" ]]; then
-        echo "Running FirstRun startup script"
-        if [[ -f "${FIRSTRUN_DATA_DIR}/.config" ]]; then
-            source "${FIRSTRUN_DATA_DIR}/.config"
-        fi
         echo "Running FirstRun Upgrade script"
-        exec sudo "${FIRSTRUN_DIR}/upgrade.sh"
+        exec sudo bash "${FIRSTRUN_DIR}/upgrade.sh"
     fi
 else
     echo "Attempting to create and connect to screen session 'openflixr_setup'."
