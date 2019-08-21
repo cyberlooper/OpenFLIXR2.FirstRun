@@ -53,13 +53,12 @@ if [[ ${TERM:0:6} != "screen" ]]; then
         log "DEV_MODE='${DEV_MODE:-}'"
     fi
     info "Getting latest for 'OpenFLIXR2.FirstRun'"
-    if [[ ! -d "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun" ]]; then
-        rm -r "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun"
-        git clone https://github.com/openflixr/OpenFLIXR2.FirstRun.git "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun/"
+    if [[ ! -d "${FIRSTRUN_DIR}" ]]; then
+        git clone https://github.com/openflixr/OpenFLIXR2.FirstRun.git "${FIRSTRUN_DIR}"
     fi
 
-    if [[ -d "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun/.git" ]] && [[ -d "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun/.scripts" ]]; then
-        cd "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun" || fatal "Failed to change to '${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun' directory."
+    if [[ -d "${FIRSTRUN_DIR}/.git" ]] && [[ -d "${FIRSTRUN_DIR}/.scripts" ]]; then
+        cd "${FIRSTRUN_DIR}" || fatal "Failed to change to '${FIRSTRUN_DIR}' directory."
         info "  Fetching recent changes from git."
         git fetch > /dev/null 2>&1 || fatal "Failed to fetch recent changes from git."
         GH_COMMIT=$(git rev-parse --short ${FIRSTRUN_BRANCH:-origin/master})
@@ -67,7 +66,7 @@ if [[ ${TERM:0:6} != "screen" ]]; then
         git reset --hard "${FIRSTRUN_BRANCH:-origin/master}" > /dev/null 2>&1 || fatal "Failed to reset to '${FIRSTRUN_BRANCH:-origin/master}'."
         git pull > /dev/null 2>&1 || fatal "Failed to pull recent changes from git."
         git for-each-ref --format '%(refname:short)' refs/heads | grep -v master | xargs git branch -D > /dev/null 2>&1 || true
-        chmod +x "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun/run_me.sh" > /dev/null 2>&1 || fatal "OpenFLIXR2 FirstRun Script must be executable."
+        chmod +x "${FIRSTRUN_DIR}/run_me.sh" > /dev/null 2>&1 || fatal "OpenFLIXR2 FirstRun Script must be executable."
         info "  OpenFLIXR2 FirstRun Script has been updated to '${GH_COMMIT}' on '${FIRSTRUN_BRANCH:-origin/master}'"
     else
         fatal "- Something went wrong getting 'OpenFLIXR2.FirstRuntupopenflixr'"
