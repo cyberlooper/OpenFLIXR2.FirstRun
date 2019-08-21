@@ -55,7 +55,7 @@ if [[ ${TERM:0:6} != "screen" ]]; then
     info "Getting latest for 'OpenFLIXR2.FirstRun'"
     if [[ -d "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun" ]]; then
         rm -r "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun"
-        git clone https://github.com/openflixr/OpenFLIXR2.FirstRun "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun/"
+        git clone https://github.com/openflixr/OpenFLIXR2.FirstRun.git "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun/"
     fi
 
     if [[ -d "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun/.git" ]] && [[ -d "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun/.scripts" ]]; then
