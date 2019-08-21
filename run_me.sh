@@ -7,8 +7,13 @@ readonly DETECTED_UGROUP=$(id -gn "${DETECTED_PUID}" 2> /dev/null || true)
 readonly DETECTED_HOMEDIR=$(eval echo "~${DETECTED_UNAME}" 2> /dev/null || true)
 readonly FIRSTRUN_DIR="${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun"
 readonly FIRSTRUN_DATA_DIR="${DETECTED_HOMEDIR}/.FirstRun"
+readonly FIRSTRUN_LOG_DIR="${FIRSTRUN_DATA_DIR}/logs"
 
-readonly LOG_FILE="${FIRSTRUN_DATA_DIR}/logs/run_me.log"
+if [[ ! -d "${FIRSTRUN_LOG_DIR}" ]]; then
+    mkdir -p "${FIRSTRUN_LOG_DIR}"
+fi
+
+readonly LOG_FILE="${FIRSTRUN_LOG_DIR}/run_me.log"
 sudo chown "${DETECTED_PUID:-$DETECTED_UNAME}":"${DETECTED_PGID:-$DETECTED_UGROUP}" "${LOG_FILE}" > /dev/null 2>&1 || true # This line should always use sudo
 log() {
     if [[ -v DEBUG && $DEBUG == 1 ]] || [[ -v VERBOSE && $VERBOSE == 1 ]] || [[ -v DEVMODE && $DEVMODE == 1 ]]; then
@@ -65,7 +70,7 @@ if [[ ${TERM:0:6} != "screen" ]]; then
         chmod +x "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun/run_me.sh" > /dev/null 2>&1 || fatal "OpenFLIXR2 FirstRun Script must be executable."
         info "  OpenFLIXR2 FirstRun Script has been updated to '${GH_COMMIT}' on '${FIRSTRUN_BRANCH:-origin/master}'"
     else
-        fatal "- Something went wrong getting 'seOpenFLIXR2.FirstRuntupopenflixr'"
+        fatal "- Something went wrong getting 'OpenFLIXR2.FirstRuntupopenflixr'"
     fi
     if [[ $(grep -c "bash ${FIRSTRUN_DIR}/startup.sh" "${DETECTED_HOMEDIR}/.bashrc") == 0 ]]; then
         info "Adding FirstRun startup script to .profile to run on boot until this is all done..."

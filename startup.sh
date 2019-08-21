@@ -7,6 +7,7 @@ readonly DETECTED_UGROUP=$(id -gn "${DETECTED_PUID}" 2> /dev/null || true)
 readonly DETECTED_HOMEDIR=$(eval echo "~${DETECTED_UNAME}" 2> /dev/null || true)
 readonly FIRSTRUN_DIR="${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun"
 readonly FIRSTRUN_DATA_DIR="${DETECTED_HOMEDIR}/.FirstRun"
+readonly FIRSTRUN_LOG_DIR="${FIRSTRUN_DATA_DIR}/logs"
 
 if [[ ${TERM:0:6} == "screen" ]]; then
     SCREEN_SESSION_NAME=$(echo $STY | cut -d '.' -f 2)

@@ -7,6 +7,7 @@ readonly DETECTED_UGROUP=$(id -gn "${DETECTED_PUID}" 2> /dev/null || true)
 readonly DETECTED_HOMEDIR=$(eval echo "~${DETECTED_UNAME}" 2> /dev/null || true)
 readonly FIRSTRUN_DIR="${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun"
 readonly FIRSTRUN_DATA_DIR="${DETECTED_HOMEDIR}/.FirstRun"
+readonly FIRSTRUN_LOG_DIR="${FIRSTRUN_DATA_DIR}/logs"
 
 # Colors
 # https://misc.flogisoft.com/bash/tip_colors_and_formatting
@@ -17,7 +18,7 @@ readonly YLW='\e[33m'
 readonly NC='\e[0m'
 
 # Log Functions
-readonly LOG_FILE="${FIRSTRUN_DATA_DIR}/logs/upgrade.log"
+readonly LOG_FILE="${FIRSTRUN_LOG_DIR}/upgrade.log"
 sudo chown "${DETECTED_PUID:-$DETECTED_UNAME}":"${DETECTED_PGID:-$DETECTED_UGROUP}" "${LOG_FILE}" > /dev/null 2>&1 || true # This line should always use sudo
 log() {
     if [[ -v DEBUG && $DEBUG == 1 ]] || [[ -v VERBOSE && $VERBOSE == 1 ]] || [[ -v DEVMODE && $DEVMODE == 1 ]]; then
