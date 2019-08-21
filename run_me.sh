@@ -57,7 +57,7 @@ if [[ ${TERM:0:6} != "screen" ]]; then
         git clone https://github.com/openflixr/OpenFLIXR2.FirstRun.git "${FIRSTRUN_DIR}"
     fi
 
-    if [[ -d "${FIRSTRUN_DIR}/.git" ]] && [[ -d "${FIRSTRUN_DIR}/.scripts" ]]; then
+    if [[ -d "${FIRSTRUN_DIR}/.git" ]]; then
         cd "${FIRSTRUN_DIR}" || fatal "Failed to change to '${FIRSTRUN_DIR}' directory."
         info "  Fetching recent changes from git."
         git fetch > /dev/null 2>&1 || fatal "Failed to fetch recent changes from git."
@@ -69,7 +69,7 @@ if [[ ${TERM:0:6} != "screen" ]]; then
         chmod +x "${FIRSTRUN_DIR}/run_me.sh" > /dev/null 2>&1 || fatal "OpenFLIXR2 FirstRun Script must be executable."
         info "  OpenFLIXR2 FirstRun Script has been updated to '${GH_COMMIT}' on '${FIRSTRUN_BRANCH:-origin/master}'"
     else
-        fatal "- Something went wrong getting 'OpenFLIXR2.FirstRuntupopenflixr'"
+        fatal "- Something went wrong getting 'OpenFLIXR2.FirstRun'"
     fi
     if [[ $(grep -c "bash ${FIRSTRUN_DIR}/startup.sh" "${DETECTED_HOMEDIR}/.bashrc") == 0 ]]; then
         info "Adding FirstRun startup script to .profile to run on boot until this is all done..."
