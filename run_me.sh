@@ -43,7 +43,7 @@ fi
 if [[ ${TERM:0:6} != "screen" ]]; then
     if [[ ! -n "$(command -v screen)" ]]; then
         warning "Screen needs to be installed..."
-        echo "openflixr" | sudo -S apt-get -y install screen
+        echo "openflixr" | sudo -S DEBIAN_FRONTEND=noninteractive apt-get -y install screen
     fi
     if [[ -f "${FIRSTRUN_DATA_DIR}/.config" ]]; then
         source "${FIRSTRUN_DATA_DIR}/.config"
