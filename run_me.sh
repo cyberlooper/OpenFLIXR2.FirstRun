@@ -53,7 +53,7 @@ if [[ ${TERM:0:6} != "screen" ]]; then
         log "DEV_MODE='${DEV_MODE:-}'"
     fi
     info "Getting latest for 'OpenFLIXR2.FirstRun'"
-    if [[ -d "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun" ]]; then
+    if [[ ! -d "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun" ]]; then
         rm -r "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun"
         git clone https://github.com/openflixr/OpenFLIXR2.FirstRun.git "${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun/"
     fi
