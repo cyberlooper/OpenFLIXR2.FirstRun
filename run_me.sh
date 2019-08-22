@@ -70,7 +70,7 @@ if [[ ${TERM:0:6} != "screen" ]]; then
     else
         fatal "- Something went wrong getting 'OpenFLIXR2.FirstRun'"
     fi
-    if [[ $(grep -c "bash ${FIRSTRUN_DIR}/startup.sh" "${DETECTED_HOMEDIR}/.bashrc") == 0 ]]; then
+    if [[ $(grep -c "#firstrun-startup" "${DETECTED_HOMEDIR}/.bashrc") == 0 ]]; then
         info "Adding FirstRun startup script to .profile to run on boot until this is all done..."
         echo "" >> "${DETECTED_HOMEDIR}/.bashrc"
         echo "if [[ -f ${FIRSTRUN_DIR}/startup.sh ]]; then   #firstrun-startup" >> "${DETECTED_HOMEDIR}/.bashrc"
