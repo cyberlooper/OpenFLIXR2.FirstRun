@@ -148,7 +148,11 @@ setupopenflixr --no-log-submission -f updater
 setupopenflixr --no-log-submission -f mono
 setupopenflixr --no-log-submission -f redis
 setupopenflixr --no-log-submission -f php
+log "Checking DNS"
 setupopenflixr --no-log-submission -p dns_check
 setupopenflixr --no-log-submission -p ready_check || exit
+log "System ready!"
+log "Preparing for upgrade"
 setupopenflixr --no-log-submission -p prepare_upgrade
+log "Running upgrade..."
 setupopenflixr --no-log-submission -p upgrade
