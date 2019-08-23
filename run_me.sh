@@ -68,7 +68,7 @@ if [[ ${TERM:0:6} != "screen" ]]; then
     fi
     info "Getting latest for 'setupopenflixr'"
     if [[ ! -d /opt/OpenFLIXR2.SetupScript/ ]]; then
-        git clone https://github.com/openflixr/OpenFLIXR2.SetupScript /opt/OpenFLIXR2.SetupScript
+        echo "openflixr" | sudo -S git clone https://github.com/openflixr/OpenFLIXR2.SetupScript /opt/OpenFLIXR2.SetupScript
     fi
 
     if [[ -d /opt/OpenFLIXR2.SetupScript/.git ]] && [[ -d /opt/OpenFLIXR2.SetupScript/.scripts ]]; then
