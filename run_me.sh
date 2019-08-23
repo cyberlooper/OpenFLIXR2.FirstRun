@@ -41,10 +41,6 @@ if [[ ${DETECTED_PUID} == "0" ]] || [[ ${DETECTED_HOMEDIR} == "/root" ]]; then
 fi
 
 if [[ ${TERM:0:6} != "screen" ]]; then
-    if [[ ! -n "$(command -v screen)" ]]; then
-        warning "Screen needs to be installed..."
-        echo "openflixr" | sudo -S DEBIAN_FRONTEND=noninteractive apt-get -y install screen
-    fi
     if [[ -f "${FIRSTRUN_DATA_DIR}/.config" ]]; then
         source "${FIRSTRUN_DATA_DIR}/.config"
         log "DEV_BRANCH='${DEV_BRANCH:-}'"
@@ -70,6 +66,26 @@ if [[ ${TERM:0:6} != "screen" ]]; then
     else
         fatal "- Something went wrong getting 'OpenFLIXR2.FirstRun'"
     fi
+    info "Getting latest for 'setupopenflixr'"
+    if [[ ! -d /opt/OpenFLIXR2.SetupScript/ ]]; then
+        git clone https://github.com/openflixr/OpenFLIXR2.SetupScript /opt/OpenFLIXR2.SetupScript
+    fi
+
+    if [[ -d /opt/OpenFLIXR2.SetupScript/.git ]] && [[ -d /opt/OpenFLIXR2.SetupScript/.scripts ]]; then
+        cd "/opt/OpenFLIXR2.SetupScript/" || fatal "Failed to change to '/opt/OpenFLIXR2.SetupScript/' directory."
+        info "  Fetching recent changes from git."
+        git fetch > /dev/null 2>&1 || fatal "Failed to fetch recent changes from git."
+        GH_COMMIT=$(git rev-parse --short ${SETUP_BRANCH:-origin/master})
+        info "  Updating OpenFLIXR2 Setup Script to '${GH_COMMIT}' on '${SETUP_BRANCH:-origin/master}'."
+        git reset --hard "${SETUP_BRANCH:-origin/master}" > /dev/null 2>&1 || fatal "Failed to reset to '${SETUP_BRANCH:-origin/master}'."
+        git pull > /dev/null 2>&1 || fatal "Failed to pull recent changes from git."
+        git for-each-ref --format '%(refname:short)' refs/heads | grep -v master | xargs git branch -D > /dev/null 2>&1 || true
+        chmod +x "/opt/OpenFLIXR2.SetupScript/main.sh" > /dev/null 2>&1 || fatal "OpenFLIXR2 Setup Script must be executable."
+        info "  OpenFLIXR2 Setup Script has been updated to '${GH_COMMIT}' on '${SETUP_BRANCH:-origin/master}'"
+    else
+        fatal "- Something went wrong getting 'setupopenflixr'"
+    fi
+
     if [[ $(grep -c "#firstrun-startup" "${DETECTED_HOMEDIR}/.bashrc") == 0 ]]; then
         info "Adding FirstRun startup script to .profile to run on boot until this is all done..."
         echo "" >> "${DETECTED_HOMEDIR}/.bashrc"
@@ -79,10 +95,9 @@ if [[ ${TERM:0:6} != "screen" ]]; then
         info "- Done"
     fi
 
-    echo "Attempting to create and connect to screen session 'openflixr_setup'."
-    sleep 10s
-    if ! screen -list | grep -q "openflixr_setup"; then
-        screen -dmS openflixr_setup
-    fi
-    screen -x -R openflixr_setup -t openflixr_setup
+    info "Fixing setupopenflixr symlink"
+    bash /opt/OpenFLIXR2.SetupScript/main.sh -s
+
+    info "Running startup script"
+    exec bash ${FIRSTRUN_DIR}/startup.sh
 fi
