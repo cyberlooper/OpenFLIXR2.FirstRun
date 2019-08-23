@@ -18,7 +18,7 @@ if [[ ${TERM:0:6} == "screen" ]]; then
 else
     if [[ ! -n "$(command -v screen)" ]]; then
         echo "Screen needs to be installed..."
-        setupopenflixr --no-log-submission -p process_check || exit
+        echo "openflixr" | sudo -S setupopenflixr --no-log-submission -p process_check || exit
         echo "Installing Screen..."
         echo "openflixr" | sudo -S DEBIAN_FRONTEND=noninteractive apt-get -y install screen
     fi
