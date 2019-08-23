@@ -70,6 +70,8 @@ if [[ ${TERM:0:6} != "screen" ]]; then
     if [[ ! -d /opt/OpenFLIXR2.SetupScript/ ]]; then
         echo "openflixr" | sudo -S git clone https://github.com/openflixr/OpenFLIXR2.SetupScript /opt/OpenFLIXR2.SetupScript
     fi
+    info "  Setting permissions on '/opt/OpenFLIXR2.SetupScript'"
+    echo "openflixr" | sudo -S chown -R openflixr:openflixr /opt/OpenFLIXR2.SetupScript || fatal "Failed to set permissions on '/opt/OpenFLIXR2.SetupScript'"
 
     if [[ -d /opt/OpenFLIXR2.SetupScript/.git ]] && [[ -d /opt/OpenFLIXR2.SetupScript/.scripts ]]; then
         cd "/opt/OpenFLIXR2.SetupScript/" || fatal "Failed to change to '/opt/OpenFLIXR2.SetupScript/' directory."
