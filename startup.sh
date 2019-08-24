@@ -25,5 +25,5 @@ else
         screen -dmS openflixr_setup
     fi
     info "Connecting Screen session..."
-    screen -x -R openflixr_setup -t openflixr_setup
+    screen -x -R openflixr_setup
 fi
