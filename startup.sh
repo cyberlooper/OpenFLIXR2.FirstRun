@@ -21,9 +21,9 @@ else
     fi
     echo "Attempting to create and connect to screen session 'openflixr_setup'."
     if ! screen -list | grep -q "openflixr_setup"; then
-        info "Creating Screen session..."
+        echo "Creating Screen session..."
         screen -dmS openflixr_setup
     fi
-    info "Connecting Screen session..."
+    echo "Connecting Screen session..."
     screen -x -R openflixr_setup
 fi
