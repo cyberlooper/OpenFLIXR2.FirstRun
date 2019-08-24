@@ -151,7 +151,7 @@ if [[ ! -n "$(command -v screen)" ]]; then
     else
         info "Attempting to create and connect to screen session 'openflixr_setup'."
         if ! screen -list | grep -q "openflixr_setup"; then
-            info "Crating Screen session..."
+            info "Creating Screen session..."
             screen -dmS openflixr_setup
         fi
         info "Connecting Screen session..."
