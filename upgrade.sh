@@ -155,6 +155,7 @@ if [[ ! -n "$(command -v screen)" ]]; then
             screen -dmS openflixr_setup
         fi
         info "Connecting Screen session..."
+        script /dev/null
         screen -x -R openflixr_setup -t openflixr_setup
         exit 0
     fi
