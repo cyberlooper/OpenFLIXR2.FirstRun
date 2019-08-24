@@ -110,5 +110,5 @@ if [[ ${TERM:0:6} != "screen" ]]; then
     echo "openflixr" | sudo -S bash /opt/OpenFLIXR2.SetupScript/main.sh -s
 
     info "Running startup script"
-    exec bash ${FIRSTRUN_DIR}/startup.sh
+    bash ${FIRSTRUN_DIR}/startup.sh
 fi

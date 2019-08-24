@@ -13,11 +13,11 @@ if [[ ${TERM:0:6} == "screen" ]]; then
     SCREEN_SESSION_NAME=$(echo $STY | cut -d '.' -f 2)
     if [[ ${SCREEN_SESSION_NAME} == "openflixr_setup" ]]; then
         echo "Running FirstRun Upgrade script"
-        exec echo "openflixr" | sudo -S bash "${FIRSTRUN_DIR}/upgrade.sh"
+        echo "openflixr" | sudo -S bash "${FIRSTRUN_DIR}/upgrade.sh"
     fi
 else
     if [[ ! -n "$(command -v screen)" ]]; then
-        exec echo "openflixr" | sudo -S bash "${FIRSTRUN_DIR}/upgrade.sh"
+        echo "openflixr" | sudo -S bash "${FIRSTRUN_DIR}/upgrade.sh"
     else
         echo "Attempting to create and connect to screen session 'openflixr_setup'."
         if ! screen -list | grep -q "openflixr_setup"; then
