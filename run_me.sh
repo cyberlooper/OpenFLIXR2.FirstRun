@@ -9,6 +9,14 @@ readonly FIRSTRUN_DIR="${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun"
 readonly FIRSTRUN_DATA_DIR="${DETECTED_HOMEDIR}/.FirstRun"
 readonly FIRSTRUN_LOG_DIR="${FIRSTRUN_DATA_DIR}/logs"
 
+# Colors
+# https://misc.flogisoft.com/bash/tip_colors_and_formatting
+readonly BLU='\e[34m'
+readonly GRN='\e[32m'
+readonly RED='\e[31m'
+readonly YLW='\e[33m'
+readonly NC='\e[0m'
+
 if [[ ! -d "${FIRSTRUN_LOG_DIR}" ]]; then
     echo "Creating log directory"
     mkdir -p "${FIRSTRUN_LOG_DIR}"
