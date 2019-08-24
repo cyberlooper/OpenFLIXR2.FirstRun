@@ -10,11 +10,12 @@ readonly FIRSTRUN_DATA_DIR="${DETECTED_HOMEDIR}/.FirstRun"
 readonly FIRSTRUN_LOG_DIR="${FIRSTRUN_DATA_DIR}/logs"
 
 if [[ ! -d "${FIRSTRUN_LOG_DIR}" ]]; then
+    echo "Creating log directory"
     mkdir -p "${FIRSTRUN_LOG_DIR}"
 fi
 
 readonly LOG_FILE="${FIRSTRUN_LOG_DIR}/run_me.log"
-sudo chown "${DETECTED_PUID:-$DETECTED_UNAME}":"${DETECTED_PGID:-$DETECTED_UGROUP}" "${LOG_FILE}" > /dev/null 2>&1 || true # This line should always use sudo
+echo "openflixr" | sudo -S chown "${DETECTED_PUID:-$DETECTED_UNAME}":"${DETECTED_PGID:-$DETECTED_UGROUP}" "${LOG_FILE}" > /dev/null 2>&1 || true # This line should always use sudo
 log() {
     if [[ -v DEBUG && $DEBUG == 1 ]] || [[ -v VERBOSE && $VERBOSE == 1 ]] || [[ -v DEVMODE && $DEVMODE == 1 ]]; then
         echo -e "${NC}$(date +"%F %T") ${BLU}[LOG]${NC}        $*${NC}" | tee -a "${LOG_FILE}";
