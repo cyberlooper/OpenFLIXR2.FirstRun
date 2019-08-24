@@ -149,14 +149,6 @@ if [[ ! -n "$(command -v screen)" ]]; then
     if [[ ! -n "$(command -v screen)" ]]; then
         fatal "Something is wrong and screen isn't installed..."
     else
-        info "Attempting to create and connect to screen session 'openflixr_setup'."
-        if ! screen -list | grep -q "openflixr_setup"; then
-            info "Creating Screen session..."
-            screen -dmS openflixr_setup
-        fi
-        info "Connecting Screen session..."
-        script /dev/null
-        screen -x -R openflixr_setup -t openflixr_setup
         exit 0
     fi
 fi
