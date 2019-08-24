@@ -17,14 +17,8 @@ if [[ ${TERM:0:6} == "screen" ]]; then
     fi
 else
     if [[ ! -n "$(command -v screen)" ]]; then
-        echo "Screen needs to be installed..."
-        echo "openflixr" | sudo -S setupopenflixr --no-log-submission -p process_check || exit
-        echo "Installing Screen..."
-        echo "openflixr" | sudo -S DEBIAN_FRONTEND=noninteractive apt-get -y install screen && CONTINUE=1
+        exec echo "openflixr" | sudo -S bash "${FIRSTRUN_DIR}/upgrade.sh"
     else
-        CONTINUE=1
-    fi
-    if [[ ${CONTINUE:-0} == 1 ]]; then
         echo "Attempting to create and connect to screen session 'openflixr_setup'."
         if ! screen -list | grep -q "openflixr_setup"; then
             screen -dmS openflixr_setup

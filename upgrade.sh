@@ -43,7 +43,10 @@ debug() {
 # Cleanup Function
 cleanup() {
     log "Removing lock file"
-    rm "${FIRSTRUN_DATA_DIR}/upgrade.lock"
+    if [[ -f "${FIRSTRUN_DATA_DIR}/upgrade.lock" ]]; then
+        log "Removing lock"
+        rm "${FIRSTRUN_DATA_DIR}/upgrade.lock"
+    fi
 }
 
 exec 2> >(tee -a "${LOG_FILE}")
@@ -139,6 +142,22 @@ fi
 
 setupopenflixr --no-log-submission -p uptime || exit
 setupopenflixr --no-log-submission -p process_check || exit
+
+if [[ ! -n "$(command -v screen)" ]]; then
+    info "Screen needs to be installed..."
+    echo "openflixr" | sudo -S DEBIAN_FRONTEND=noninteractive apt-get -y install screen || fatal "Screen failed to install..."
+    if [[ ! -n "$(command -v screen)" ]]; then
+        fatal "Something is wrong and screen isn't installed..."
+    else
+        info "Attempting to create and connect to screen session 'openflixr_setup'."
+        if ! screen -list | grep -q "openflixr_setup"; then
+            screen -dmS openflixr_setup
+        fi
+        screen -x -R openflixr_setup -t openflixr_setup
+        exit 0
+    fi
+fi
+
 info "Putting some fixes in place..."
 setupopenflixr --no-log-submission -f sources
 info "Checking that Apt Update works"
