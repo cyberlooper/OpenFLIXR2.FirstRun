@@ -140,6 +140,21 @@ else
     log "/etc/sudoers.d/firstrun already exists"
 fi
 
+if [[ ! -f "/etc/systemd/system/getty@tty1.service.d/override.conf" ]]; then
+    info "Temporarily enabling auto-login for openflixr so this will run on reboot"
+    if [[ ! -d "/etc/systemd/system/getty@tty1.service.d/" ]]; then
+        mkdir -p "/etc/systemd/system/getty@tty1.service.d/"
+    fi
+    touch "/etc/systemd/system/getty@tty1.service.d/override.conf"
+    echo "[Service]" > "/etc/systemd/system/getty@tty1.service.d/override.conf"
+    echo "ExecStart=" >> "/etc/systemd/system/getty@tty1.service.d/override.conf"
+    echo 'ExecStart=-/sbin/agetty --noissue --autologin openflixr %I $TERM' >> "/etc/systemd/system/getty@tty1.service.d/override.conf"
+    echo "Type=idle" >> "/etc/systemd/system/getty@tty1.service.d/override.conf"
+    info "- Done"
+else
+    log "/etc/sudoers.d/firstrun already exists"
+fi
+
 setupopenflixr --no-log-submission -p uptime || exit
 setupopenflixr --no-log-submission -p process_check || exit
 
