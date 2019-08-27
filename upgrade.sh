@@ -43,7 +43,10 @@ debug() {
 # Cleanup Function
 cleanup() {
     log "Removing lock file"
-    rm "${FIRSTRUN_DATA_DIR}/upgrade.lock"
+    if [[ -f "${FIRSTRUN_DATA_DIR}/upgrade.lock" ]]; then
+        log "Removing lock"
+        rm "${FIRSTRUN_DATA_DIR}/upgrade.lock"
+    fi
 }
 
 exec 2> >(tee -a "${LOG_FILE}")
@@ -91,10 +94,15 @@ fi
 
 info " ------ Starting FirstRun Upgrade ------"
 info "Getting latest for 'setupopenflixr'"
-if [[ -d /opt/OpenFLIXR2.SetupScript/ ]]; then
-    rm -r /opt/OpenFLIXR2.SetupScript/
+if [[ ! -d /opt/OpenFLIXR2.SetupScript/.git ]] && [[ ! -d /opt/OpenFLIXR2.SetupScript/.scripts ]]; then
+    if [[ -d /opt/OpenFLIXR2.SetupScript ]]; then
+        rm -r /opt/OpenFLIXR2.SetupScript/
+    fi
+    git clone https://github.com/openflixr/OpenFLIXR2.SetupScript /opt/OpenFLIXR2.SetupScript
+    chown -R openflixr:openflixr /opt/OpenFLIXR2.SetupScript || fatal "Failed to set permissions on '/opt/OpenFLIXR2.SetupScript'"
+else
+    chown -R openflixr:openflixr /opt/OpenFLIXR2.SetupScript || fatal "Failed to set permissions on '/opt/OpenFLIXR2.SetupScript'"
 fi
-git clone https://github.com/openflixr/OpenFLIXR2.SetupScript /opt/OpenFLIXR2.SetupScript
 
 if [[ -d /opt/OpenFLIXR2.SetupScript/.git ]] && [[ -d /opt/OpenFLIXR2.SetupScript/.scripts ]]; then
     cd "/opt/OpenFLIXR2.SetupScript/" || fatal "Failed to change to '/opt/OpenFLIXR2.SetupScript/' directory."
@@ -132,8 +140,35 @@ else
     log "/etc/sudoers.d/firstrun already exists"
 fi
 
+if [[ ! -f "/etc/systemd/system/getty@tty1.service.d/override.conf" ]]; then
+    info "Temporarily enabling auto-login for openflixr so this will run on reboot"
+    if [[ ! -d "/etc/systemd/system/getty@tty1.service.d/" ]]; then
+        mkdir -p "/etc/systemd/system/getty@tty1.service.d/"
+    fi
+    touch "/etc/systemd/system/getty@tty1.service.d/override.conf"
+    echo '' >> "/etc/systemd/system/getty@tty1.service.d/override.conf"
+    echo '[Service]' >> "/etc/systemd/system/getty@tty1.service.d/override.conf"
+    echo 'ExecStart=' >> "/etc/systemd/system/getty@tty1.service.d/override.conf"
+    echo 'ExecStart=-/sbin/agetty --noissue --autologin openflixr %I $TERM' >> "/etc/systemd/system/getty@tty1.service.d/override.conf"
+    echo 'Type=idle' >> "/etc/systemd/system/getty@tty1.service.d/override.conf"
+    info "- Done"
+else
+    log "/etc/sudoers.d/firstrun already exists"
+fi
+
 setupopenflixr --no-log-submission -p uptime || exit
 setupopenflixr --no-log-submission -p process_check || exit
+
+if [[ ! -n "$(command -v screen)" ]]; then
+    info "Screen needs to be installed..."
+    echo "openflixr" | sudo -S DEBIAN_FRONTEND=noninteractive apt-get -y install screen || fatal "Screen failed to install..."
+    if [[ ! -n "$(command -v screen)" ]]; then
+        fatal "Something is wrong and screen isn't installed..."
+    else
+        exit 0
+    fi
+fi
+
 info "Putting some fixes in place..."
 setupopenflixr --no-log-submission -f sources
 info "Checking that Apt Update works"
