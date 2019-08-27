@@ -146,10 +146,11 @@ if [[ ! -f "/etc/systemd/system/getty@tty1.service.d/override.conf" ]]; then
         mkdir -p "/etc/systemd/system/getty@tty1.service.d/"
     fi
     touch "/etc/systemd/system/getty@tty1.service.d/override.conf"
-    echo "[Service]" > "/etc/systemd/system/getty@tty1.service.d/override.conf"
-    echo "ExecStart=" >> "/etc/systemd/system/getty@tty1.service.d/override.conf"
+    echo '' >> "/etc/systemd/system/getty@tty1.service.d/override.conf"
+    echo '[Service]' >> "/etc/systemd/system/getty@tty1.service.d/override.conf"
+    echo 'ExecStart=' >> "/etc/systemd/system/getty@tty1.service.d/override.conf"
     echo 'ExecStart=-/sbin/agetty --noissue --autologin openflixr %I $TERM' >> "/etc/systemd/system/getty@tty1.service.d/override.conf"
-    echo "Type=idle" >> "/etc/systemd/system/getty@tty1.service.d/override.conf"
+    echo 'Type=idle' >> "/etc/systemd/system/getty@tty1.service.d/override.conf"
     info "- Done"
 else
     log "/etc/sudoers.d/firstrun already exists"
