@@ -56,6 +56,22 @@ if [[ ${TERM:0:6} != "screen" ]]; then
         log "FIRSTRUN_BRANCH='${FIRSTRUN_BRANCH:-}'"
         log "SETUP_BRANCH='${SETUP_BRANCH:-}'"
         log "DEV_MODE='${DEV_MODE:-}'"
+
+        if [[ ${FIRSTRUN_BRANCH:-} != "" ]]; then
+            CHECK_FIRSTRUN_BRANCH=$(git ls-remote --heads https://github.com/openflixr/OpenFLIXR2.FirstRun.git ${FIRSTRUN_BRANCH/"origin/"/} | wc -l)
+            if [[ ${CHECK_FIRSTRUN_BRANCH} -eq 0 ]]; then
+                warn "'${FIRSTRUN_BRANCH}' does not exist for OpenFLIXR2.FirstRun. Defaulting to 'origin/master'"
+                FIRSTRUN_BRANCH=""
+            fi
+        fi
+
+        if [[ ${SETUP_BRANCH:-} != "" ]]; then
+            CHECK_SETUP_BRANCH=$(git ls-remote --heads https://github.com/openflixr/OpenFLIXR2.SetupScript ${SETUP_BRANCH/"origin/"/} | wc -l)
+            if [[ ${SETUP_BRANCH} -eq 0 ]]; then
+                warn "'${SETUP_BRANCH}' does not exist for OpenFLIXR2.SetupScript. Defaulting to 'origin/master'"
+                SETUP_BRANCH=""
+            fi
+        fi
     fi
     info "Getting latest for 'OpenFLIXR2.FirstRun'"
     if [[ ! -d "${FIRSTRUN_DIR}" ]]; then
