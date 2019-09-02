@@ -156,6 +156,12 @@ else
     log "/etc/sudoers.d/firstrun already exists"
 fi
 
+if [[ $(cat /etc/timezone) != "UTC" ]]; then
+    notice "Setting OpenFLIXR's timezone to UTC"
+    timedatectl set–timezone UTC
+    timedatectl set-local-rtc 0
+fi
+
 setupopenflixr --no-log-submission -p uptime || exit
 setupopenflixr --no-log-submission -p process_check || exit
 
