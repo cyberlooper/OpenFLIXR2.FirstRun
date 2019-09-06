@@ -157,9 +157,9 @@ else
 fi
 
 if [[ $(cat /etc/timezone) != "UTC" ]]; then
-    notice "Setting OpenFLIXR's timezone to UTC"
-    timedatectl set–timezone UTC
-    timedatectl set-local-rtc 0
+    info "Setting OpenFLIXR's timezone to UTC"
+    timedatectl set-timezone UTC || warning "Unable to set timezone to UTC"
+    timedatectl set-local-rtc 0 || warning "Unable to sync time with hardware clock"
 fi
 
 setupopenflixr --no-log-submission -p uptime || exit
