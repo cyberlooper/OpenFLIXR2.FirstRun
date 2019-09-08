@@ -221,6 +221,12 @@ valid_ip()
     fi
     return $stat
 }
+# Google Drive File Download
+function gdrive_download () {
+  CONFIRM=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate "https://docs.google.com/uc?export=download&id=$1" -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')
+  wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$CONFIRM&id=$1" -O $2
+  rm -rf /tmp/cookies.txt
+}
 
 cmdline() {
     # http://www.kfirlavi.com/blog/2012/11/14/defensive-bash-programming/
@@ -359,7 +365,8 @@ main() {
             mv "/var/lib/vz/template/iso/OpenFLIXR_2.0_VMware_VirtualBox.iso" "${DATA_DIR}/OpenFLIXR_2.0_VMware_VirtualBox.ova"
         fi
         if [[ ! -f "${DATA_DIR}/OpenFLIXR_2.0_VMware_VirtualBox.ova" ]]; then
-            fatal "VM Image not found: '${DATA_DIR}/OpenFLIXR_2.0_VMware_VirtualBox.ova'"
+            notice "'${DATA_DIR}/OpenFLIXR_2.0_VMware_VirtualBox.ova' not found. Attempting to download it for you..."
+            gdrive_download "1Ooac-HFcSID4vSSy5Mmtu1c5dSsnlXtQ" "OpenFLIXR_2.0_VMware_VirtualBox.ova" || fatal "Unable to download 'OpenFLIXR_2.0_VMware_VirtualBox.ova' for you. Please manually download it and try again."
         fi
         if [[ ! -n "$(command -v sshpass)" ]]; then
             warn "sshpass is not installed but needed. Installing now."
@@ -648,6 +655,12 @@ main() {
                             echo -n "."
                             sleep 5s
                         fi
+
+                        if [[ $count -ge 24 ]]; then
+                            error "Couldn't reconnect to the VM after ~120 seconds"
+                            fatal "Aborting script. Run this again once the VM has booted."
+                        fi
+                        count=$(($count+1))
                     done
                     sleep 5s
                     #echo "Starting screen session on ${VM_NAME}"
