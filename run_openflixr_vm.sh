@@ -297,12 +297,12 @@ cmdline() {
                 ;;
             :)
                 case ${OPTARG} in
-                    *)
-                        fatal "${OPTARG} requires an option."
-                        ;;
                     t)
                         readonly TEST_MODE=1
                         readonly TEST_CONFIG="${DATA_DIR}/test_config.sh"
+                        ;;
+                    *)
+                        fatal "${OPTARG} requires an option."
                         ;;
                 esac
                 ;;
