@@ -351,11 +351,11 @@ main() {
         fi
         # OVA Check
         if [[ -f "OpenFLIXR_2.0_VMware_VirtualBox.ova" ]]; then
-            info "Moving OVA to OpenFLIXR/"
+            info "Moving OVA to '${DATA_DIR}/'"
             mv "OpenFLIXR_2.0_VMware_VirtualBox.ova" "${DATA_DIR}/OpenFLIXR_2.0_VMware_VirtualBox.ova"
         fi
         if [[ -f "/var/lib/vz/template/iso/OpenFLIXR_2.0_VMware_VirtualBox.iso" ]]; then
-            info "Renmaing ISO to OVA and moving to OpenFLIXR/"
+            info "Renmaing ISO to OVA and moving to '${DATA_DIR}/'"
             mv "/var/lib/vz/template/iso/OpenFLIXR_2.0_VMware_VirtualBox.iso" "${DATA_DIR}/OpenFLIXR_2.0_VMware_VirtualBox.ova"
         fi
         if [[ ! -f "${DATA_DIR}/OpenFLIXR_2.0_VMware_VirtualBox.ova" ]]; then
@@ -748,7 +748,7 @@ main() {
                 openflixr_duration=$(date -ud @${openflixr_elapsed} +'%H hours %M minutes %S seconds')
                 notice "----------------------------------------------------------------------------"
                 notice "Test took ${test_duration}"
-                notice "OpenFLIXR was ready in ${openflixr_duration}"
+                notice "${VM_NAME} was ready in ${openflixr_duration}"
                 if [[ ${NOT_RUNNING_COUNT} -gt 0 ]]; then
                     warn "${NOT_RUNNING_COUNT} services are not running:"
                     for service in "${NOT_RUNNING[@]}"; do
