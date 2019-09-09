@@ -61,6 +61,7 @@ readonly VM_NAME="OpenFLIXR"
 readonly VM_USERNAME="openflixr"
 readonly VM_PASSWORD="openflixr"
 readonly VM_HOST="openflixr"
+readonly RUNME_PID_FILE="/root/OpenFLIXR/run_me.pid"
 
 # Terminal Colors
 if [[ ${CI:-} == true ]] || [[ -t 1 ]]; then
@@ -138,12 +139,7 @@ if [[ ! -d "${DATA_DIR}" ]]; then
 fi
 
 readonly LOG_FILE="${DATA_DIR}/${VM_NAME}.log"
-
-if [[ -f "${LOG_FILE}" ]]; then
-    rm "${LOG_FILE}"
-fi
-
-touch "${LOG_FILE}"
+echo "" > "${LOG_FILE}" # Truncate log file
 
 log() {
     if [[ ${LOG_LEVEL:-${NOTICE}} -ge ${DEBUG} ]]; then
@@ -200,6 +196,12 @@ root_check() {
 cleanup() {
     if [[ ${CI:-} == true ]] && [[ ${TRAVIS:-} == true ]] && [[ ${TRAVIS_SECURE_ENV_VARS} == false ]]; then
         warn "TRAVIS_SECURE_ENV_VARS is false for Pull Requests from remote branches. Please retry failed builds!"
+    fi
+    if [[ -f "${RUNME_PID_FILE}" ]]; then
+        RUNME_PID=$(cat "${RUNME_PID_FILE}")
+        if [ -e /proc/${RUNME_PID} -a /proc/${RUNME_PID}/exe ]; then
+            kill -9 ${RUNME_PID}
+        fi
     fi
 }
 trap 'cleanup' 0 1 2 3 6 14 15
@@ -422,10 +424,12 @@ main() {
                     fi
                     if [[ ${HYPERVISOR} == "VIRTUALBOX" ]]; then
                         info "Powering off ${VM_NAME}"
+                        NET_MAC=""
                         vboxmanage controlvm ${VM_NAME} poweroff 2>/dev/null || true
                         VM_STOPPING=$(vboxmanage showvminfo "${VM_NAME}" | grep -c "stopping (since" || true)
                     elif [[ ${HYPERVISOR} == "PROXMOX" ]]; then
                         info "Stopping ${VM_NAME} with ID ${VM_ID}"
+                        NET_MAC=$(qm config ${VM_ID} | grep "net" | awk -F'=' '{print $2}' | awk -F',' '{print $1}' || true)
                         qm stop ${VM_ID}
                         VM_STOPPING=1
                     fi
@@ -438,12 +442,12 @@ main() {
                                 VM_STOP_CHECK=$(qm status ${VM_ID} | grep -c "running" || true)
                             fi
                             if [[ ${VM_STOP_CHECK} == 0 ]]; then
+                                echo ""
                                 break
                             fi
                             echo -n "."
                             sleep 15s
                         done
-                        echo ""
                         info "- Stopped"
                     fi
                     info "Deleting ${VM_NAME}"
@@ -465,10 +469,14 @@ main() {
             fi # VM check
 
             if [[ ${IMPORT_VM:-} == "1" ]]; then
-                info "Importing ${VM_NAME}"
+                notice "Importing ${VM_NAME}"
                 if [[ ${HYPERVISOR} == "VIRTUALBOX" ]]; then
                     VBoxManage import "${DATA_DIR}/OpenFLIXR_2.0_VMware_VirtualBox.ova" --vsys 0 --vmname ${VM_NAME} --cpus 6 --memory 6144 > ${LOG_FILE}
-                    VBoxManage modifyvm ${VM_NAME} --macaddress1 "080027f699ec" > ${LOG_FILE}
+                    if [[ ${NET_MAC:-} != "" && "${NET_MAC}" =~ ^([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}$ ]]; then
+                        VBoxManage modifyvm ${VM_NAME} --macaddress1 "${NET_MAC}" > ${LOG_FILE}
+                    elif [[ ${NET_MAC:-} != "" ]]; then
+                        warning "Detected MAC address from previous VM invalid. MAC address won't be set for ${VM_NAME}"
+                    fi
                     VBoxManage modifyvm ${VM_NAME} --vrde on > ${LOG_FILE}
                     VBoxManage storagectl ${VM_NAME} --name SATA --remove > ${LOG_FILE}
                 elif [[ ${HYPERVISOR} == "PROXMOX" ]]; then
@@ -526,7 +534,15 @@ main() {
                         read -p 'Please manually add the network interface via the Web Interface and press enter to continue' TEMP
                     fi
                     info "Adding network device"
-                    qm set ${VM_ID} --net0 e1000,bridge=${NET_ID},firewall=1
+                    if [[ ${NET_MAC:-} != "" && "${NET_MAC}" =~ ^([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}$ ]]; then
+                        MAC_ADDR=",macaddr=${NET_MAC}"
+                    elif [[ ${NET_MAC:-} != "" ]]; then
+                        MAC_ADDR=""
+                        warning "Detected MAC address from previous VM invalid. MAC address won't be set for ${VM_NAME}"
+                    else
+                        MAC_ADDR=""
+                    fi
+                    qm set ${VM_ID} --net0 e1000,bridge=${NET_ID},firewall=1${MAC_ADDR:-}
                 fi
             fi
         fi
@@ -623,15 +639,35 @@ main() {
                     debug "  RETURN_CODE='$?'"
                 fi
                 debug "- Checking if OpenFLIXR2.FirstRun branch 'development' exists..."
-                DEV_URL_EXISTS=$(curl -s --head https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/development/run_me.sh | head -1 | grep -c "HTTP/1.[01] [23].." || true)
+                DEV_URL_EXISTS=$(sshpass -p "${VM_PASSWORD}" ssh -t -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'bash -c "curl -s --head https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/development/run_me.sh | head -1 | grep -c "HTTP/1.[01] [23].." || true)"' || true)
                 debug "  RETURN_CODE='$?'"
-                if [[ ${DEV_URL_EXISTS} -ge 1 ]]; then
-                    info "Running 'run_me.sh' from development..."
-                    sshpass -p "${VM_PASSWORD}" ssh -t -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/development/run_me.sh)"' || true
-                else
-                    info "Running 'run_me.sh' from master..."
-                    sshpass -p "${VM_PASSWORD}" ssh -t -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/master/run_me.sh)"' || true
+
+                RUNME_RUNNING=0
+                if [[ -f "${RUNME_PID_FILE}" ]]; then
+                    debug "'${RUNME_PID_FILE}' found"
+                    RUNME_PID=$(cat "${RUNME_PID_FILE}")
+                    debug "RUNME_PID='${RUNME_PID}'"
+                    if [ -e /proc/${RUNME_PID} -a /proc/${RUNME_PID}/exe ]; then
+                        RUNME_RUNNING=1
+                    fi
                 fi
+                if [[ ${RUNME_RUNNING} == 0 ]]; then
+                    if [[ ${DEV_URL_EXISTS} -ge 1 ]]; then
+                        info "Running 'run_me.sh' from development..."
+                        sshpass -p "${VM_PASSWORD}" ssh -t -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/development/run_me.sh)" >/dev/null 2>&1' &
+                        RUNME_PID=$!
+                    else
+                        info "Running 'run_me.sh' from master..."
+                        sshpass -p "${VM_PASSWORD}" ssh -t -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/master/run_me.sh)" >/dev/null 2>&1' &
+                        RUNME_PID=$!
+                    fi
+                    echo "${RUNME_PID}" > "${RUNME_PID_FILE}"
+                    echo "'run_me.sh' is running with PID ${RUNME_PID}"
+                else
+                    echo "'run_me.sh' is already running with PID ${RUNME_PID}!"
+                fi
+            else
+                debug "   Yep."
             fi
             notice "Waiting on status changes..."
             count=0
@@ -699,10 +735,12 @@ main() {
                         UPGRADE_STAGE="COMPLETE"
                         break
                     fi
+                else
+                    debug "Setup log doesn't exist on ${VM_NAME}"
                 fi
                 sleep 5s
                 if [[ ${count} -ge 12 ]]; then
-                    count=1
+                    count=0
                     echo ""
                 else
                     echo -n "."
