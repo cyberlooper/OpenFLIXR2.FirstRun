@@ -19,7 +19,7 @@ else
     if [[ ! -n "$(command -v screen)" ]]; then
         echo "openflixr" | sudo -S bash "${FIRSTRUN_DIR}/upgrade.sh" || STATUS="FAILED"
     fi
-    if [[ ${STATUS:-} != "FAILED"]]; then
+    if [[ ${STATUS:-} != "FAILED" ]]; then
         echo "Attempting to create and connect to screen session 'openflixr_setup'."
         if ! screen -list | grep -q "openflixr_setup"; then
             echo "Creating Screen session..."
