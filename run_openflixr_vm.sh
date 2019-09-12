@@ -847,7 +847,11 @@ main() {
                 test_duration=$(date -ud @${test_elapsed} +'%H hours %M minutes %S seconds')
                 notice "----------------------------------------------------------------------------"
                 if [[ ${NOT_RUNNING_COUNT} -gt 0 ]]; then
-                    warn "${NOT_RUNNING_COUNT} services are not running:"
+                    if [[ ${NOT_RUNNING_COUNT} -eq 1 ]]; then
+                        warn "${NOT_RUNNING_COUNT} service is not running:"
+                    elif [[ ${NOT_RUNNING_COUNT} -gt 1 ]]; then
+                        warn "${NOT_RUNNING_COUNT} services are not running:"
+                    fi
                     for service in "${NOT_RUNNING[@]}"; do
                         warn "- ${service}"
                     done
