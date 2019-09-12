@@ -61,7 +61,7 @@ readonly VM_NAME="OpenFLIXR"
 readonly VM_USERNAME="openflixr"
 readonly VM_PASSWORD="openflixr"
 readonly VM_HOST="openflixr"
-readonly RUNME_PID_FILE="/root/OpenFLIXR/run_me.pid"
+readonly RUNME_PID_FILE="${DETECTED_HOMEDIR}/OpenFLIXR/run_me.pid"
 
 # Terminal Colors
 if [[ ${CI:-} == true ]] || [[ -t 1 ]]; then
@@ -307,7 +307,7 @@ cmdline() {
                 case ${OPTARG} in
                     t)
                         readonly TEST_MODE=1
-                        readonly TEST_CONFIG="${DATA_DIR}/test_config.sh"
+                        readonly TEST_CONFIG="${DATA_DIR}/test.config"
                         ;;
                     *)
                         fatal "${OPTARG} requires an option."
@@ -499,7 +499,8 @@ main() {
                         VM_ID=$(pvesh get /cluster/nextid)
                     fi
 
-                    info "Importing configuration from OVF"
+                    info "Importing configuration from OVF."
+                    warn "This will take several minutes, even after you see '(100.00/100%)'. Keep waiting."
                     qm importovf ${VM_ID} "${DATA_DIR}/OpenFLIXR_2.0_VMware_VirtualBox.ovf" local-lvm
                     info "Updating configuration"
                     info "Setting name to ${VM_NAME}"
@@ -625,62 +626,81 @@ main() {
 
         notice "Beginning configuration of ${VM_NAME}"
         readonly openflixr_start=$(date +%s)
-        RESULT=$(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'echo "OK"' || true)
+        RESULT=$(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'echo "OK"'  2>/dev/null || true)
         debug "  RESULT=${RESULT}"
         if [[ ${RESULT} == "OK" && ${VALID_IP} == 1 ]]; then
             RESULT=""
             debug "- Checking if run_me.sh is running or has run"
-            RUNME_LOG_EXISTS=$(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'ls -l /home/openflixr/.FirstRun/logs/run_me.log 2>/dev/null | wc -l')
+            RUNME_LOG_EXISTS=$(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'ls -l /home/openflixr/.FirstRun/logs/run_me.log 2>/dev/null | wc -l' 2>/dev/null)
             if [[ ${RUNME_LOG_EXISTS} -eq 0 ]]; then
                 debug "   Nope."
-                if [[ -f "${DATA_DIR}/openflixr_test_config.sh" ]]; then
+                RUNME_LOG_EXISTS=$(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'ls -l /home/openflixr/.FirstRun/logs/run_me.log 2>/dev/null | wc -l' 2>/dev/null)
+                if [[ -f "${DATA_DIR}/test.config" ]]; then
                     info "Test config file found! Running test config file..."
-                    sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'bash -s' < "${DATA_DIR}/openflixr_test_config.sh" || true
+                    sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'bash -s' < "${DATA_DIR}/test.config" 2>/dev/null || true
                     debug "  RETURN_CODE='$?'"
                 fi
-                debug "- Checking if OpenFLIXR2.FirstRun branch 'development' exists..."
-                DEV_URL_EXISTS=$(sshpass -p "${VM_PASSWORD}" ssh -t -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'bash -c "curl -s --head https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/development/run_me.sh | head -1 | grep -c "HTTP/1.[01] [23].." || true)"' || true)
-                debug "  RETURN_CODE='$?'"
+                debug "Adding information specific for this script"
+                sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'mkdir -p ".FirstRun"' 2>/dev/null
+                sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'touch ".FirstRun/.run_openflixr_vm"' 2>/dev/null
+            else
+                debug "   Yep."
+            fi
 
-                RUNME_RUNNING=0
-                if [[ -f "${RUNME_PID_FILE}" ]]; then
-                    debug "'${RUNME_PID_FILE}' found"
-                    RUNME_PID=$(cat "${RUNME_PID_FILE}")
-                    debug "RUNME_PID='${RUNME_PID}'"
-                    if [ -e /proc/${RUNME_PID} -a /proc/${RUNME_PID}/exe ]; then
-                        RUNME_RUNNING=1
-                    fi
+            RUNME_RUNNING=0
+            if [[ -f "${RUNME_PID_FILE}" ]]; then
+                debug "'${RUNME_PID_FILE}' found"
+                RUNME_PID=$(cat "${RUNME_PID_FILE}")
+                debug "RUNME_PID='${RUNME_PID}'"
+                if [ -e /proc/${RUNME_PID} -a /proc/${RUNME_PID}/exe ]; then
+                    debug "'run_me.sh' is running"
+                    RUNME_RUNNING=1
+                else
+                    debug "'run_me.sh' is NOT running"
                 fi
-                if [[ ${RUNME_RUNNING} == 0 ]]; then
-                    if [[ ${DEV_URL_EXISTS} -ge 1 ]]; then
+            fi
+            if [[ ${RUNME_RUNNING} == 0 ]]; then
+                debug "'run_me.sh' is NOT running (2)"
+
+                SCREEN_EXISTS=$(sshpass -p "openflixr" ssh -t -oStrictHostKeyChecking=accept-new openflixr@openflixr 'command -v screen || true' 2>/dev/null || true)
+                SCREEN_RUNNING=$(sshpass -p "openflixr" ssh -t -oStrictHostKeyChecking=accept-new openflixr@openflixr 'screen -ls 2>/dev/null | grep -c "openflixr_setup" || true' 2>/dev/null || true)
+                debug "SCREEN_EXISTS='${SCREEN_EXISTS}'"
+                debug "SCREEN_RUNNING='${SCREEN_RUNNING}'"
+                if [[ ${SCREEN_EXISTS} != "" && ${SCREEN_CHECK} == "1" ]]; then
+                    debug "Screen is running on ${VM_NAME}"
+                else
+                    echo "" > "${DATA_DIR}/run_me.log"
+                    echo "" > "${DATA_DIR}/run_me.error"
+                    debug "- Checking if OpenFLIXR2.FirstRun branch 'development' exists..."
+                    DEV_URL_EXISTS=$(sshpass -p "${VM_PASSWORD}" ssh -t -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'curl -s --head https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/development/run_me.sh | head -1 | grep -c "HTTP/1.[01] [23].." || true' 2>/dev/null)
+                    debug "DEV_URL_EXISTS='${DEV_URL_EXISTS}'"
+                    if [[ ${DEV_URL_EXISTS:-} == "1" ]]; then
                         info "Running 'run_me.sh' from development..."
-                        sshpass -p "${VM_PASSWORD}" ssh -t -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/development/run_me.sh)" >/dev/null 2>&1' &
+                        sshpass -p "${VM_PASSWORD}" ssh -t -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/development/run_me.sh)" && bash OpenFLIXR2.FirstRun/startup.sh' >>"${DATA_DIR}/run_me.log" 2>>"${DATA_DIR}/run_me.error" &
                         RUNME_PID=$!
                     else
                         info "Running 'run_me.sh' from master..."
-                        sshpass -p "${VM_PASSWORD}" ssh -t -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/master/run_me.sh)" >/dev/null 2>&1' &
+                        sshpass -p "${VM_PASSWORD}" ssh -t -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/master/run_me.sh)" && bash OpenFLIXR2.FirstRun/startup.sh' >>"${DATA_DIR}/run_me.log" 2>>"${DATA_DIR}/run_me.error" &
                         RUNME_PID=$!
                     fi
                     echo "${RUNME_PID}" > "${RUNME_PID_FILE}"
-                    echo "'run_me.sh' is running with PID ${RUNME_PID}"
-                else
-                    echo "'run_me.sh' is already running with PID ${RUNME_PID}!"
+                    info "'run_me.sh' is running with PID ${RUNME_PID}"
                 fi
             else
-                debug "   Yep."
+                info "'run_me.sh' is already running with PID ${RUNME_PID}!"
             fi
             notice "Waiting on status changes..."
             count=0
             UPGRADE_STAGE="UPTIME"
             while true; do
-                RESULT=$(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'echo "OK"' || true)
+                RESULT=$(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'echo "OK"' 2>/dev/null || true)
                 RETURN_CODE=$?
                 if [[ ${RESULT} != "OK" ]]; then
                     echo ""
                     notice "Connection to ${VM_NAME} lost. Probably because the system rebooted."
                     notice "Waiting for connection to ${VM_NAME}..."
                     while true; do
-                        RESULT=$(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'echo "OK"' || true)
+                        RESULT=$(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'echo "OK"' 2>/dev/null || true)
                         RETURN_CODE=$?
                         if [[ ${RESULT} == "OK" ]]; then
                             echo ""
@@ -700,46 +720,69 @@ main() {
                     done
                     sleep 5s
                     #echo "Starting screen session on ${VM_NAME}"
-                    #sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'screen -dmS openflixr_setup'
-                    #sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'screen -x -R openflixr_setup'
+                    #sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'screen -dmS openflixr_setup' 2>/dev/null
+                    #sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'screen -x -R openflixr_setup' 2>/dev/null
                     notice "Waiting on status changes..."
                 fi
-                SETUP_CONFIG_EXISTS=$(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'ls -l /home/openflixr/openflixr_setup/openflixr_setup.config 2>/dev/null | wc -l' || true)
+                SETUP_CONFIG_EXISTS=$(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'ls -l /home/openflixr/openflixr_setup/openflixr_setup.config 2>/dev/null | wc -l' 2>/dev/null || true)
                 if [[ ${SETUP_CONFIG_EXISTS} -ge 1 ]]; then
-                    if [[ ${UPGRADE_STAGE} == "UPTIME" && $(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'grep -c "FIRSTRUN_UPTIME=COMPLETED" "/home/openflixr/openflixr_setup/openflixr_setup.config"' || true) == 1 ]]; then
-                        notice "Uptime check completed!"
+                    if [[ ${UPGRADE_STAGE} == "UPTIME" && $(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'grep -c "FIRSTRUN_UPTIME=COMPLETED" "/home/openflixr/openflixr_setup/openflixr_setup.config"' 2>/dev/null || true) == 1 ]]; then
+                        count=0
+                        echo ""
+                        notice "Uptime Check completed!"
+                        info "Waiting on Process Check"
                         UPGRADE_STAGE="PROCESS_CHECK"
                     fi
-                    if [[ ${UPGRADE_STAGE} == "PROCESS_CHECK" && $(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'grep -c "FIRSTRUN_PROCESSCHECK=COMPLETED" "/home/openflixr/openflixr_setup/openflixr_setup.config"' || true) == 1  ]]; then
-                        notice "Process check completed!"
+                    if [[ ${UPGRADE_STAGE} == "PROCESS_CHECK" && $(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'grep -c "FIRSTRUN_PROCESSCHECK=COMPLETED" "/home/openflixr/openflixr_setup/openflixr_setup.config"' 2>/dev/null || true) == 1  ]]; then
+                        count=0
+                        echo ""
+                        notice "Process Check completed!"
+                        info "Waiting on DNS Check"
                         UPGRADE_STAGE="DNS_CHECK"
                     fi
-                    if [[ ${UPGRADE_STAGE} == "DNS_CHECK" && $(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'grep -c "FIRSTRUN_DNSCHECK=COMPLETED" "/home/openflixr/openflixr_setup/openflixr_setup.config"' || true) == 1 ]]; then
+                    if [[ ${UPGRADE_STAGE} == "DNS_CHECK" && $(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'grep -c "FIRSTRUN_DNSCHECK=COMPLETED" "/home/openflixr/openflixr_setup/openflixr_setup.config"' 2>/dev/null || true) == 1 ]]; then
+                        count=0
+                        echo ""
                         notice "DNS Check Completed!"
+                        info "Waiting on Pre-upgrade"
                         UPGRADE_STAGE="PREPARE"
                     fi
-                    if [[ ${UPGRADE_STAGE} == "PREPARE" && $(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'grep -c "FIRSTRUN_PREPARE_UPGRADE=COMPLETED" "/home/openflixr/openflixr_setup/openflixr_setup.config"' || true) == 1 ]]; then
+                    if [[ ${UPGRADE_STAGE} == "PREPARE" && $(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'grep -c "FIRSTRUN_PREPARE_UPGRADE=COMPLETED" "/home/openflixr/openflixr_setup/openflixr_setup.config"' 2>/dev/null || true) == 1 ]]; then
+                        count=0
+                        echo ""
                         notice "Pre-upgrade completed!"
+                        info "Waiting on Upgrade"
                         UPGRADE_STAGE="UPGRADE"
                     fi
-                    if [[ ${UPGRADE_STAGE} == "UPGRADE" && $(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'grep -c "FIRSTRUN_UPGRADE=COMPLETED" "/home/openflixr/openflixr_setup/openflixr_setup.config"' || true) == 1 ]]; then
+                    if [[ ${UPGRADE_STAGE} == "UPGRADE" && $(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'grep -c "FIRSTRUN_UPGRADE=COMPLETED" "/home/openflixr/openflixr_setup/openflixr_setup.config"' 2>/dev/null || true) == 1 ]]; then
+                        count=0
+                        echo ""
                         notice "Upgrade completed!"
+                        info "Waiting on Fixes"
                         UPGRADE_STAGE="FIXES"
                     fi
-                    if [[ ${UPGRADE_STAGE} == "FIXES" && $(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'grep -c "FIRSTRUN_FIXES=COMPLETED" "/home/openflixr/openflixr_setup/openflixr_setup.config"' || true) == 1 ]]; then
+                    if [[ ${UPGRADE_STAGE} == "FIXES" && $(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'grep -c "FIRSTRUN_FIXES=COMPLETED" "/home/openflixr/openflixr_setup/openflixr_setup.config"' 2>/dev/null || true) == 1 ]]; then
+                        count=0
+                        echo ""
                         notice "Fixes completed!"
+                        info "Waiting on Cleanup"
                         UPGRADE_STAGE="CLEANUP"
                     fi
-                    if [[ ${UPGRADE_STAGE} == "CLEANUP" && $(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 2>/dev/null 'grep -c "FIRSTRUN_CLEANUP=COMPLETED" "/home/openflixr/openflixr_setup/openflixr_setup.config"' || true) == 1 ]]; then
+                    if [[ ${UPGRADE_STAGE} == "CLEANUP" && $(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'grep -c "FIRSTRUN_CLEANUP=COMPLETED" "/home/openflixr/openflixr_setup/openflixr_setup.config"' 2>/dev/null || true) == 1 ]]; then
+                        count=0
+                        echo ""
                         notice "System Ready!"
                         UPGRADE_STAGE="COMPLETE"
                         break
+                    fi
+                    if [[ $(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'grep -c "Well, this is unexpected" "/var/log/openflixr_setup.log"' 2>/dev/null || true) == 1 ]]; then
+                        error "Something has gone horribly wrong during the ${UPGRADE_STAGE} stage =("
                     fi
                 else
                     debug "Setup log doesn't exist on ${VM_NAME}"
                 fi
                 sleep 5s
-                if [[ ${count} -ge 12 ]]; then
+                if [[ ${count} -ge 48 ]]; then
                     count=0
                     echo ""
                 else
@@ -748,9 +791,7 @@ main() {
                 fi
             done
 
-            openflixr_elapsed=$(($(date +%s)-$openflixr_start))
-
-            if [[ -v TEST_MODE && ${TEST_MODE} == 1 ]]; then
+            if [[ ${UPGRADE_STAGE} == "COMPLETE" && -v TEST_MODE && ${TEST_MODE} == 1 ]]; then
                 notice "Giving the server some time to settle..."
                 sleep 120s
                 echo ""
@@ -796,10 +837,7 @@ main() {
                 echo ""
                 test_elapsed=$(($(date +%s)-$test_start))
                 test_duration=$(date -ud @${test_elapsed} +'%H hours %M minutes %S seconds')
-                openflixr_duration=$(date -ud @${openflixr_elapsed} +'%H hours %M minutes %S seconds')
                 notice "----------------------------------------------------------------------------"
-                notice "Test took ${test_duration}"
-                notice "${VM_NAME} was ready in ${openflixr_duration}"
                 if [[ ${NOT_RUNNING_COUNT} -gt 0 ]]; then
                     warn "${NOT_RUNNING_COUNT} services are not running:"
                     for service in "${NOT_RUNNING[@]}"; do
@@ -808,9 +846,15 @@ main() {
                 else
                     notice "All checked services are running!"
                 fi
-            else
-                openflixr_duration=$(date -ud @${openflixr_elapsed} +'%H hours %M minutes %S seconds')
+                notice "Test took ${test_duration}"
+            fi
+
+            openflixr_elapsed=$(($(date +%s)-$openflixr_start))
+            openflixr_duration=$(date -ud @${openflixr_elapsed} +'%H hours %M minutes %S seconds')
+            if [[ ${UPGRADE_STAGE} == "COMPLETE" ]]; then
                 notice "${VM_NAME} is ready! It took ${openflixr_duration}"
+            else
+                notice "${VM_NAME} took ${openflixr_duration} to fail..."
             fi
         elif [[ ${RESULT} == "" ]]; then
             fatal "Unable to connect to ${VM_NAME} using ${VM_IP}"
