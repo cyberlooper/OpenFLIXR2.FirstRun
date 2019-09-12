@@ -17,13 +17,17 @@ if [[ ${TERM:0:6} == "screen" ]]; then
     fi
 else
     if [[ ! -n "$(command -v screen)" ]]; then
-        echo "openflixr" | sudo -S bash "${FIRSTRUN_DIR}/upgrade.sh"
+        echo "openflixr" | sudo -S bash "${FIRSTRUN_DIR}/upgrade.sh" || STATUS="FAILED"
     fi
-    echo "Attempting to create and connect to screen session 'openflixr_setup'."
-    if ! screen -list | grep -q "openflixr_setup"; then
-        echo "Creating Screen session..."
-        screen -dmS openflixr_setup
+    if [[ ${STATUS:-} != "FAILED" ]]; then
+        echo "Attempting to create and connect to screen session 'openflixr_setup'."
+        if ! screen -list | grep -q "openflixr_setup"; then
+            echo "Creating Screen session..."
+            screen -dmS openflixr_setup
+        fi
+        echo "Connecting Screen session..."
+        screen -x -R openflixr_setup
+    else
+        echo "Something went wrong. You'll probably need to start over..."
     fi
-    echo "Connecting Screen session..."
-    screen -x -R openflixr_setup
 fi
