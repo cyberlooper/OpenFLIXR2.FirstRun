@@ -775,6 +775,7 @@ main() {
                     fi
                     if [[ $(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'grep -c "Well, this is unexpected" "/var/log/openflixr_setup.log"' 2>/dev/null || true) == 1 ]]; then
                         error "Something has gone horribly wrong during the ${UPGRADE_STAGE} stage =("
+                        break
                     fi
                 else
                     debug "Setup log doesn't exist on ${VM_NAME}"
