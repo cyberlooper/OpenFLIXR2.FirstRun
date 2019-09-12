@@ -669,18 +669,16 @@ main() {
                 if [[ ${SCREEN_EXISTS} != "" && ${SCREEN_CHECK} == "1" ]]; then
                     debug "Screen is running on ${VM_NAME}"
                 else
-                    echo "" > "${DATA_DIR}/run_me.log"
-                    echo "" > "${DATA_DIR}/run_me.error"
                     debug "- Checking if OpenFLIXR2.FirstRun branch 'development' exists..."
                     DEV_URL_EXISTS=$(sshpass -p "${VM_PASSWORD}" ssh -t -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'curl -s --head https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/development/run_me.sh | head -1 | grep -c "HTTP/1.[01] [23].." || true' 2>/dev/null)
                     debug "DEV_URL_EXISTS='${DEV_URL_EXISTS}'"
                     if [[ ${DEV_URL_EXISTS:-} == "1" ]]; then
                         info "Running 'run_me.sh' from development..."
-                        sshpass -p "${VM_PASSWORD}" ssh -t -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/development/run_me.sh)" && bash OpenFLIXR2.FirstRun/startup.sh' >>"${DATA_DIR}/run_me.log" 2>>"${DATA_DIR}/run_me.error" &
+                        sshpass -p "${VM_PASSWORD}" ssh -t -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/development/run_me.sh)" && bash OpenFLIXR2.FirstRun/startup.sh' >>"${LOG_FILE}" 2>&1 &
                         RUNME_PID=$!
                     else
                         info "Running 'run_me.sh' from master..."
-                        sshpass -p "${VM_PASSWORD}" ssh -t -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/master/run_me.sh)" && bash OpenFLIXR2.FirstRun/startup.sh' >>"${DATA_DIR}/run_me.log" 2>>"${DATA_DIR}/run_me.error" &
+                        sshpass -p "${VM_PASSWORD}" ssh -t -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/master/run_me.sh)" && bash OpenFLIXR2.FirstRun/startup.sh' >>"${LOG_FILE}" 2>&1 &
                         RUNME_PID=$!
                     fi
                     echo "${RUNME_PID}" > "${RUNME_PID_FILE}"
