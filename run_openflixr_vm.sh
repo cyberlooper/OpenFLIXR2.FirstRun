@@ -666,7 +666,7 @@ main() {
                 SCREEN_RUNNING=$(sshpass -p "openflixr" ssh -t -oStrictHostKeyChecking=accept-new openflixr@openflixr 'screen -ls 2>/dev/null | grep -c "openflixr_setup" || true' 2>/dev/null || true)
                 debug "SCREEN_EXISTS='${SCREEN_EXISTS}'"
                 debug "SCREEN_RUNNING='${SCREEN_RUNNING}'"
-                if [[ ${SCREEN_EXISTS} != "" && ${SCREEN_CHECK} == "1" ]]; then
+                if [[ ${SCREEN_EXISTS} != "" && ${SCREEN_RUNNING} == "1" ]]; then
                     debug "Screen is running on ${VM_NAME}"
                 else
                     debug "- Checking if OpenFLIXR2.FirstRun branch 'development' exists..."
