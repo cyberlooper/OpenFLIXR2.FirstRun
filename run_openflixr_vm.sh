@@ -697,6 +697,8 @@ main() {
                     echo ""
                     notice "Connection to ${VM_NAME} lost. Probably because the system rebooted."
                     notice "Waiting for connection to ${VM_NAME}..."
+                    conn_wait=5
+                    conn_start=$(date +%s)
                     while true; do
                         RESULT=$(sshpass -p "${VM_PASSWORD}" ssh -oStrictHostKeyChecking=accept-new ${VM_USERNAME}@${VM_IP} 'echo "OK"' 2>/dev/null || true)
                         RETURN_CODE=$?
@@ -710,7 +712,9 @@ main() {
                             sleep 5s
                         fi
 
-                        if [[ $count -ge 24 ]]; then
+                        conn_elapsed=$(($(date +%s)-$conn_start))
+                        conn_minutes=$(date -ud @$conn_elapsed +%M)
+                        if [[ ${conn_minutes#0} -ge ${conn_wait} || $count -ge 100 ]]; then
                             error "Couldn't reconnect to the VM after ~120 seconds"
                             fatal "Aborting script. Run this again once the VM has booted."
                         fi
@@ -735,6 +739,11 @@ main() {
                         count=0
                         echo ""
                         notice "Process Check completed!"
+                        sleep 5s
+                        if [[ $(tail -5 "${LOG_FILE}" | grep -c "Must be connected to a terminal.") == 1 ]]; then
+                            notice "The remaining stages are running in a Screen session on the VM"
+                            notice "You may connect to the VM to see what it is doing and disconnect at any time."
+                        fi
                         info "Waiting on DNS Check"
                         UPGRADE_STAGE="DNS_CHECK"
                     fi
