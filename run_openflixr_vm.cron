@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+# A file used for testing the FirstRun process.
+# Sample cron entry to use this
+#   # Run run_openflixr_vm.cron every day at 2 AM System time
+#   0 2 * * * "bash /path/to/file/run_openflixr_vm.cron"
+
+VM_RUNNING=0
+PID_FILE="/root/OpenFLIXR/run_openflixr_vm.pid"
+if [[ -f "${PID_FILE}" ]]; then
+    PID=$(cat "${PID_FILE}")
+    if [ -e /proc/${PID} -a /proc/${PID}/exe ]; then
+        VM_RUNNING=1
+    fi
+fi
+
+if [[ ${VM_RUNNING} == 0 ]]; then
+    echo "Getting and running run_openflixr_vm.sh"
+    wget -q https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/master/run_openflixr_vm.sh -O /root/OpenFLIXR/run_openflixr_vm.sh || fatal "Unable to get 'run_openflixr_vm.sh'"
+    wget -q https://raw.githubusercontent.com/openflixr/OpenFLIXR2.FirstRun/master/test.config -O /root/OpenFLIXR/test.config || fatal "Unable to get 'test.config'"
+    bash /root/OpenFLIXR/run_openflixr_vm.sh -l trace -r -t test.config >/dev/null 2>/root/OpenFLIXR/OpenFLIXR.log &
+    PID=$!
+    echo "${PID}" > "${PID_FILE}"
+    echo "run_openflixr_vm.sh is running with PID ${PID}"
+else
+    echo "run_openflixr_vm.sh is already running with PID ${PID}!"
+fi

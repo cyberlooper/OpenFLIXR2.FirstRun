@@ -57,6 +57,12 @@ if [[ ${TERM:0:6} != "screen" ]]; then
         log "SETUP_BRANCH='${SETUP_BRANCH:-}'"
         log "DEV_MODE='${DEV_MODE:-}'"
 
+        warn "!!!! This script is no longer maintained !!!!"
+        echo "This script is no longer maintained and looking for a maintainer."
+        echo "If you are interested in maintaining this script, please post a message on the OpenFLIXR Discord server."
+        echo "You may continue using OpenFLIXR as is but support will be limited until a maintainer is found to update the code, etc."
+        read -rp "Press enter to continue or Ctrl+c/Cmd+c to cancel" -t 60
+
         if [[ ${FIRSTRUN_BRANCH:-} != "" ]]; then
             CHECK_FIRSTRUN_BRANCH=$(git ls-remote --heads https://github.com/openflixr/OpenFLIXR2.FirstRun.git ${FIRSTRUN_BRANCH/"origin/"/} | wc -l)
             if [[ ${CHECK_FIRSTRUN_BRANCH} -eq 0 ]]; then

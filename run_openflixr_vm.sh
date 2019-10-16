@@ -348,6 +348,12 @@ main() {
     if [[ ${CI:-} != true ]] && [[ ${TRAVIS:-} != true ]]; then
         root_check
 
+        warn "!!!! This script is no longer maintained !!!!"
+        echo "This script is no longer maintained and looking for a maintainer."
+        echo "If you are interested in maintaining this script, please post a message on the OpenFLIXR Discord server."
+        echo "You may continue using OpenFLIXR as is but support will be limited until a maintainer is found to update the code, etc."
+        read -rp "Press enter to continue or Ctrl+c/Cmd+c to cancel" -t 60
+
         #Process args
         cmdline "${ARGS[@]:-}"
         #Check for test config
