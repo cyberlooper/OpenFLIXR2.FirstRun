@@ -57,7 +57,7 @@ if [[ ${TERM:0:6} != "screen" ]]; then
         log "SETUP_BRANCH='${SETUP_BRANCH:-}'"
         log "DEV_MODE='${DEV_MODE:-}'"
 
-        warn "!!!! This project is no longer maintained !!!!"
+        warn "!!!! This script is no longer maintained !!!!"
         echo "This script is no longer maintained and looking for a maintainer."
         echo "If you are interested in maintaining this script, please post a message on the OpenFLIXR Discord server."
         echo "You may continue using OpenFLIXR as is but support will be limited until a maintainer is found to update the code, etc."
