@@ -8,7 +8,7 @@ readonly DETECTED_HOMEDIR=$(eval echo "~${DETECTED_UNAME}" 2> /dev/null || true)
 readonly FIRSTRUN_DIR="${DETECTED_HOMEDIR}/OpenFLIXR2.FirstRun"
 readonly FIRSTRUN_DATA_DIR="${DETECTED_HOMEDIR}/.FirstRun"
 readonly FIRSTRUN_LOG_DIR="${FIRSTRUN_DATA_DIR}/logs"
-readonly ombidir="/opt/ombi"
+readonly ombidir="/opt/Ombi"
 
 if [[ ! -d "${ombidir}" ]]; then
     mkdir ${ombidir}
