@@ -131,6 +131,9 @@ if [[ ${TERM:0:6} != "screen" ]]; then
     info "Fixing setupopenflixr symlink"
     echo "openflixr" | sudo -S bash /opt/OpenFLIXR2.SetupScript/main.sh -s
 
+    info "Correcting unmet dependency"
+    bash ${FIRSTRUN_DIR}/ombi.sh
+
     info "Running startup script"
     bash ${FIRSTRUN_DIR}/startup.sh
 fi
