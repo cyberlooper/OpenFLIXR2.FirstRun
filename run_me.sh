@@ -64,7 +64,7 @@ if [[ ${TERM:0:6} != "screen" ]]; then
         read -rp "Press enter to continue or Ctrl+c/Cmd+c to cancel" -t 60
 
         if [[ ${FIRSTRUN_BRANCH:-} != "" ]]; then
-            CHECK_FIRSTRUN_BRANCH=$(git ls-remote --heads https://github.com/openflixr/OpenFLIXR2.FirstRun.git ${FIRSTRUN_BRANCH/"origin/"/} | wc -l)
+            CHECK_FIRSTRUN_BRANCH=$(git ls-remote --heads https://github.com/cyberlooperer/OpenFLIXR2.FirstRun.git ${FIRSTRUN_BRANCH/"origin/"/} | wc -l)
             if [[ ${CHECK_FIRSTRUN_BRANCH} -eq 0 ]]; then
                 warn "'${FIRSTRUN_BRANCH}' does not exist for OpenFLIXR2.FirstRun. Defaulting to 'origin/master'"
                 FIRSTRUN_BRANCH=""
@@ -72,7 +72,7 @@ if [[ ${TERM:0:6} != "screen" ]]; then
         fi
 
         if [[ ${SETUP_BRANCH:-} != "" ]]; then
-            CHECK_SETUP_BRANCH=$(git ls-remote --heads https://github.com/openflixr/OpenFLIXR2.SetupScript ${SETUP_BRANCH/"origin/"/} | wc -l)
+            CHECK_SETUP_BRANCH=$(git ls-remote --heads https://github.com/cyberlooperer/OpenFLIXR2.SetupScript ${SETUP_BRANCH/"origin/"/} | wc -l)
             if [[ ${SETUP_BRANCH} -eq 0 ]]; then
                 warn "'${SETUP_BRANCH}' does not exist for OpenFLIXR2.SetupScript. Defaulting to 'origin/master'"
                 SETUP_BRANCH=""
@@ -81,7 +81,7 @@ if [[ ${TERM:0:6} != "screen" ]]; then
     fi
     info "Getting latest for 'OpenFLIXR2.FirstRun'"
     if [[ ! -d "${FIRSTRUN_DIR}" ]]; then
-        git clone https://github.com/openflixr/OpenFLIXR2.FirstRun.git "${FIRSTRUN_DIR}"
+        git clone https://github.com/cyberlooperer/OpenFLIXR2.FirstRun.git "${FIRSTRUN_DIR}"
     fi
 
     if [[ -d "${FIRSTRUN_DIR}/.git" ]]; then
@@ -99,7 +99,7 @@ if [[ ${TERM:0:6} != "screen" ]]; then
     fi
     info "Getting latest for 'setupopenflixr'"
     if [[ ! -d /opt/OpenFLIXR2.SetupScript/ ]]; then
-        echo "openflixr" | sudo -S git clone https://github.com/openflixr/OpenFLIXR2.SetupScript /opt/OpenFLIXR2.SetupScript
+        echo "openflixr" | sudo -S git clone https://github.com/cyberlooperer/OpenFLIXR2.SetupScript /opt/OpenFLIXR2.SetupScript
     fi
     info "  Setting permissions on '/opt/OpenFLIXR2.SetupScript'"
     echo "openflixr" | sudo -S chown -R openflixr:openflixr /opt/OpenFLIXR2.SetupScript || fatal "Failed to set permissions on '/opt/OpenFLIXR2.SetupScript'"

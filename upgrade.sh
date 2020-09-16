@@ -98,7 +98,7 @@ if [[ ! -d /opt/OpenFLIXR2.SetupScript/.git ]] && [[ ! -d /opt/OpenFLIXR2.SetupS
     if [[ -d /opt/OpenFLIXR2.SetupScript ]]; then
         rm -r /opt/OpenFLIXR2.SetupScript/
     fi
-    git clone https://github.com/openflixr/OpenFLIXR2.SetupScript /opt/OpenFLIXR2.SetupScript
+    git clone https://github.com/cyberlooper/OpenFLIXR2.SetupScript /opt/OpenFLIXR2.SetupScript
     chown -R openflixr:openflixr /opt/OpenFLIXR2.SetupScript || fatal "Failed to set permissions on '/opt/OpenFLIXR2.SetupScript'"
 else
     chown -R openflixr:openflixr /opt/OpenFLIXR2.SetupScript || fatal "Failed to set permissions on '/opt/OpenFLIXR2.SetupScript'"
